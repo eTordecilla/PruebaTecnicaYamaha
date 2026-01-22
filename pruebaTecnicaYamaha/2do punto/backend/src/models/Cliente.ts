@@ -1,4 +1,3 @@
-// src/models/Cliente.ts
 import pool from '../config/database';
 
 export interface Cliente {
