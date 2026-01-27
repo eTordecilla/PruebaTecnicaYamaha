@@ -1,0 +1,84 @@
+FRONTEND:
+    -	SalesForm.tsx 
+        1.	El Usuario llena formulario         
+        2.	Validación con salesSchema (Zod)
+        3.	onSubmit() → saveSale(data)
+    =>
+    -	apiService.ts
+        1.	saveSale(payload: SalesFormData)
+        2.	método POST  endpoint /ventas                    
+        3.	headers: JSON                   
+        4.	body: stringify(payload) lo que sería el HTTP REQUEST
+    =>
+BACKEND: así es la comunicación para obtener el HTTP RESPONSE:
+    -	apiService.ts (backend endpoint)
+        1.	método POST  endpoint /ventas
+        2.	Recibe req.body (SalesFormData)
+        3.	Extrae: documento, email, etc.
+    =>
+    Cliente.ts (Model)      
+    -	ClienteModel.findByDocumento()
+        SELECT * FROM clientes
+        WHERE documento = …
+    Si el cliente no existe
+        ClienteModel.create()
+        INSERT INTO clientes...
+    =>
+    DB:
+    -	pool.query(sql, params)
+        Conexión PostgreSQL
+        Ejecuta INSERT O SELECT
+        Retorna el resultado
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+FRONTEND envía formato JSON {
+    "cedula_cc": "",
+    "nombres_completos": "",
+    "correo_electronico": "",
+    "numero_motor": "",
+    "modelo": null,
+    "precio_venta": 
+}
+
+
+const crearVenta = async (req, res) => {
+    const { cedula_cc, nombres_completos, correo_electronico, numero_motor, modelo, precio_venta } = req.body;
+
+    // 1. Validaciones manuales directas
+    if (!cedula_cc || !nombres_completos || !modelo) {
+        return res.status(400).json({
+            ok: false,
+            mensaje: "Faltan datos obligatorios (Cédula, Nombre o Modelo)"
+        });
+    }
+
+    if (typeof precio_venta !== 'number' || precio_venta <= 0) {
+        return res.status(400).json({
+            ok: false,
+            mensaje: "El precio debe ser un número válido mayor a 0"
+        });
+    }
+
+    try {
+        // 2. Insertar en BD
+        const nuevaVenta = await VentaModel.create({ 
+            cedula_cc, nombres_completos, correo_electronico, numero_motor, modelo, precio_venta 
+        });
+
+        // 3. Respuesta exitosa al Front
+        return res.status(201).json({
+            ok: true,
+            mensaje: "Venta guardada correctamente",
+            venta_id: nuevaVenta._id // o nuevaVenta.id
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            ok: false,
+            mensaje: "Error interno al guardar",
+            detalle: error.message
+        });
+    }
+};

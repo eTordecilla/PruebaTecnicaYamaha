@@ -1,0 +1,60 @@
+FRONTEND:
+    - FileUpload.tsx                      
+        1. Usuario selecciona archivo CSV
+        2. Presiona botón "Subir" 
+        2. se ejecuta la función handleUpload()                   
+            → se llama el uploadSalesFile(file) del servicio
+
+=>
+
+    -  apiService.ts
+        uploadSalesFile(file: File)
+            → Lo empaqueta en un FormData.append('file', file)
+            → Consume el método POST endpoint: /ventas/batch
+            → Content-Type: multipart/form
+
+esto es lo que sería el HTTP REQUEST
+══════════════════════════════════════════════════════════════════════════
+pasamos al backend HTTP RESPONSE
+BACKEND:
+
+con el método POST endpoint: /ventas/batch
+
+    1. Se Recibe archivo
+    2. Parsea CSV línea por línea
+    3. Por cada registro se valida que los datos sean correctos:
+    Busca si el cliente ya existe:
+     - ClienteModel.findByDocumento(documento)
+     - Si NO existe → lo crea con ClienteModel.create()
+  
+        Crea el vehículo:
+            - VehiculoModel.create(motor, modelo, color...)
+        
+        Registra la venta:
+            - VentaModel.create(factura, precio, fecha...)
+    4. Transacción SQL
+
+
+PostgreSQL DB
+
+  PostgreSQL recibe las instrucciones:
+    - INSERT INTO clientes (documento, nombres...)
+    - INSERT INTO vehiculos (motor, modelo...)
+    - INSERT INTO ventas (factura, precio...)
+
+    Si todo sale bien → COMMIT (confirma cambios)
+    Si hay error → ROLLBACK (cancela todo)
+
+
+    El servidor envía respuesta:
+        {
+        success: true,
+        message: "100 ventas procesadas correctamente"
+        }
+
+
+    Frontend muestra resultado:
+    
+    FileUpload.tsx recibe la respuesta:
+        - Muestra alerta: "Archivo procesado con éxito"
+        - O muestra error si algo falló
