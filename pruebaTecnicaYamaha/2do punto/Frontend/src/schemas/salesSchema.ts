@@ -17,6 +17,21 @@ export const salesSchema = z.object({
   factura_num: z.string().min(1, "Número de factura requerido"),
   precio: z.number().positive("El precio debe ser mayor a 0"),
   fecha: z.string().refine((val) => !isNaN(Date.parse(val)), "Fecha inválida"),
+  
+  // Campos adicionales para el backend
+  ciudad: z.string().min(1, "Ciudad requerida"),
+  tienda: z.string().min(1, "Tienda requerida"),
+  vendedor: z.string().min(1, "Vendedor requerido"),
+  
+  // Campos opcionales
+  direccion: z.string().optional(),
+  fecha_nacimiento: z.string().optional(),
+  genero: z.string().optional(),
+  celular: z.string().optional(),
+  cilindraje: z.number().optional(),
+  color: z.string().optional(),
+  fecha_ensamble: z.string().optional(),
+  anio_modelo: z.number().optional()
 });
 
 // Inferencia automática del tipo de datos
