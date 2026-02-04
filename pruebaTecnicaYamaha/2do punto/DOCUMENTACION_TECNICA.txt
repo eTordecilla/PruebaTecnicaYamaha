@@ -1,0 +1,565 @@
+===============================================================================
+               DOCUMENTACIÓN TÉCNICA - 2DO PUNTO YAMAHA
+===============================================================================
+
+AUTOR: Technical Test Team
+FECHA: 4 de Febrero de 2026
+VERSIÓN: 1.0.0
+DESCRIPCIÓN: Sistema completo para gestión de ventas de motocicletas Yamaha
+
+===============================================================================
+                           ESTRUCTURA DEL 2DO PUNTO
+===============================================================================
+
+La carpeta "2do punto" contiene el sistema completo dividido en:
+
+📁 2do punto/
+├── 📁 Frontend/           # Aplicación React + TypeScript
+├── 📁 backend/            # API REST Node.js + Express
+└── 📄 logicaProcesamientoBackPunto2.txt  # Documentación de flujo
+
+===============================================================================
+                           FRONTEND - ARQUITECTURA
+===============================================================================
+
+ESTRUCTURA DE CARPETAS FRONTEND:
+📁 Frontend/src/
+├── 📁 components/        # Componentes React reutilizables
+│   ├── 📄 SalesForm.tsx     # Formulario de venta individual
+│   └── 📄 FileUpload.tsx    # Carga masiva de archivos
+├── 📁 services/          # Servicios de API
+│   └── 📄 apiService.ts     # Comunicación con backend
+├── 📁 schemas/           # Validación con Zod
+│   └── 📄 salesSchema.ts    # Schema de validación de ventas
+└── 📁 types/             # Tipos TypeScript
+    └── 📄 index.ts          # Definiciones de interfaces
+
+===============================================================================
+                           COMPONENTES FRONTEND
+===============================================================================
+
+📄 SALESFORM.TSX
+----------------
+PROPÓSITO: Formulario para registrar ventas individuales de motocicletas
+
+FUNCIONALIDADES PRINCIPALES:
+✅ Formulario completo con validación en tiempo real
+✅ Manejo de estados (loading, error, success)
+✅ Notificaciones visuales modernas (no alerts)
+✅ Validación con Zod y React Hook Form
+✅ Conexión directa con backend via saveSale()
+
+SECCIONES DEL FORMULARIO:
+🔹 DATOS DEL CLIENTE:
+   - documento (cédula)
+   - nombres
+   - apellidos  
+   - email
+
+🔹 DATOS DEL VEHÍCULO:
+   - motor (número de motor)
+   - modelo_id (select con modelos Yamaha)
+
+🔹 DATOS DE LA TRANSACCIÓN:
+   - factura_num
+   - precio
+   - fecha
+   - ciudad
+   - tienda
+   - vendedor
+
+DEPENDENCIAS:
+- React Hook Form: Manejo del estado del formulario
+- Zod: Validación de datos
+- apiService.ts: Comunicación con backend
+- TailwindCSS: Estilos visuales
+
+---
+
+📄 FILEUPLOAD.TSX
+------------------
+PROPÓSITO: Componente para carga masiva de ventas desde archivos CSV/TXT
+
+FUNCIONALIDADES PRINCIPALES:
+✅ Validación de archivos (solo CSV/TXT, máximo 10MB)
+✅ Indicador de progreso de subida en tiempo real
+✅ Manejo de errores y estados detallados
+✅ Feedback visual al usuario
+✅ Conexión con backend via uploadSalesFile()
+
+CARACTERÍSTICAS TÉCNICAS:
+🔸 Validación cliente-servidor
+🔸 XMLHttpRequest para progreso en tiempo real
+🔸 Auto-limpieza después de subida exitosa
+🔸 Drag & drop visual
+🔸 Cancelación de subida
+
+FLUJO DE ARCHIVO:
+1. Usuario selecciona archivo CSV/TXT
+2. Validación de tipo y tamaño
+3. Subida con indicador de progreso
+4. Backend procesa línea por línea
+5. Feedback con estadísticas
+
+===============================================================================
+                           SERVICIOS FRONTEND
+===============================================================================
+
+📄 API_SERVICE.TS
+-----------------
+PROPÓSITO: Capa de abstracción para comunicación con el backend
+
+CONFIGURACIÓN:
+🔹 API_URL: http://localhost:3000/api/v1
+🔹 Timeout: 30 segundos para uploads
+🔹 Manejo centralizado de errores
+
+MÉTODOS PRINCIPALES:
+
+1. saveSale(payload: SalesFormData)
+   📍 Endpoint: POST /api/v1/ventas
+   🎯 Propósito: Registrar venta individual
+   📥 Retorna: ApiResponse<any>
+   🔧 Usa: fetch() con headers JSON
+
+2. uploadSalesFile(file: File, onProgress?: Function)
+   📍 Endpoint: POST /api/v1/ventas/batch  
+   🎯 Propósito: Subir archivo CSV/TXT para procesamiento masivo
+   📥 Retorna: ApiResponse<any>
+   🔧 Usa: XMLHttpRequest (soporta progreso)
+   ⏱️ Timeout: 30 segundos
+
+TIPO DE RESPUESTA (ApiResponse):
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: string[];
+}
+```
+
+===============================================================================
+                           VALIDACIÓN FRONTEND
+===============================================================================
+
+📄 SALES_SCHEMA.TS
+------------------
+PROPÓSITO: Definir reglas de validación con Zod (TypeScript-first)
+
+CAMPOS REQUERIDOS (con validaciones):
+✅ documento: string (7-20 caracteres) - "Cédula inválida"
+✅ nombres: string (mínimo 2 caracteres) - "Nombre requerido"  
+✅ apellidos: string (mínimo 2 caracteres) - "Apellido requerido"
+✅ email: string (email válido) - "Email no válido"
+✅ motor: string (mínimo 5 caracteres) - "Número de motor requerido"
+✅ modelo_id: string (mínimo 1 caracter) - "Seleccione un modelo"
+✅ factura_num: string (mínimo 1 caracter) - "Número de factura requerido"
+✅ precio: number (positivo) - "El precio debe ser mayor a 0"
+✅ fecha: string (fecha válida) - "Fecha inválida"
+✅ ciudad: string (mínimo 1 caracter) - "Ciudad requerida"
+✅ tienda: string (mínimo 1 caracter) - "Tienda requerida"
+✅ vendedor: string (mínimo 1 caracter) - "Vendedor requerido"
+
+CAMPOS OPCIONALES:
+🔹 direccion, fecha_nacimiento, genero, celular
+🔹 cilindraje, color, fecha_ensamble, anio_modelo
+
+===============================================================================
+                           TIPOS DE DATOS
+===============================================================================
+
+📄 TYPES/INDEX.TS
+-----------------
+PROPÓSITO: Definiciones TypeScript para todo el sistema
+
+INTERFACES PRINCIPALES:
+
+🔹 Cliente
+```typescript
+interface Cliente {
+  id?: number;
+  documento: string;
+  nombres: string;
+  apellidos: string;
+  direccion?: string;
+  fecha_nacimiento?: string;
+  genero?: string;
+  celular: string;
+  email: string;
+}
+```
+
+🔹 Vehiculo  
+```typescript
+interface Vehiculo {
+  id?: number;
+  modelo_id: number;
+  motor: string;
+  cilindraje: number;
+  color: string;
+  fecha_ensamble: string;
+  anio_modelo: number;
+}
+```
+
+🔹 Venta
+```typescript
+interface Venta {
+  id?: number;
+  fecha: string;
+  factura_num: string;
+  ciudad: string;
+  tienda: string;
+  precio: number;
+  cliente_id: number;
+  vehiculo_id: number;
+  vendedor: string;
+}
+```
+
+===============================================================================
+                           BACKEND - ARQUITECTURA
+===============================================================================
+
+ESTRUCTURA DE CARPETAS BACKEND:
+📁 backend/src/
+├── 📁 config/
+│   └── 📄 database.js      # Configuración PostgreSQL
+├── 📁 controllers/
+│   └── 📄 ventasController.js  # Lógica de negocio
+├── 📁 middleware/
+│   ├── 📄 errorHandler.js      # Manejo de errores
+│   ├── 📄 upload.js            # Configuración Multer
+│   └── 📄 validation.js        # Validación Joi
+├── 📁 routes/
+│   └── 📄 ventas.js            # Rutas API
+├── 📄 index.js              # Servidor Express
+├── 📄 package.json          # Dependencias
+├── 📄 .env.example          # Variables de entorno
+└── 📄 README.md             # Documentación
+
+===============================================================================
+                           CONFIGURACIÓN BASE DE DATOS
+===============================================================================
+
+📄 DATABASE.JS
+--------------
+PROPÓSITO: Gestión de conexión PostgreSQL y creación de esquema
+
+CARACTERÍSTICAS:
+🔹 Pool de conexiones (máximo 20)
+🔹 Creación automática de tablas
+🔹 Transacciones ACID
+🔹 Datos por defecto (modelos de motocicletas)
+
+TABLAS CREADAS AUTOMÁTICAMENTE:
+
+📋 clientes
+- id (SERIAL PRIMARY KEY)
+- documento (VARCHAR(20) UNIQUE)
+- nombres, apellidos, email, direccion
+- fecha_nacimiento, genero, celular
+- created_at, updated_at
+
+📋 modelos  
+- id (SERIAL PRIMARY KEY)
+- nombre, categoria
+- created_at
+
+📋 vehiculos
+- id (SERIAL PRIMARY KEY)  
+- modelo_id (FK a modelos)
+- motor, cilindraje, color
+- fecha_ensamble, anio_modelo
+- created_at
+
+📋 ventas
+- id (SERIAL PRIMARY KEY)
+- fecha, factura_num (UNIQUE)
+- ciudad, tienda, precio
+- cliente_id (FK a clientes)
+- vehiculo_id (FK a vehiculos)  
+- vendedor, created_at
+
+DATOS POR DEFECTO (modelos):
+1. MT-07 (Naked)
+2. YZF-R3 (Sport)  
+3. Ténéré 700 (Adventure)
+4. NMAX (Scooter)
+
+===============================================================================
+                           LÓGICA DE NEGOCIO
+===============================================================================
+
+📄 VENTASCONTROLLER.JS
+---------------------
+PROPÓSITO: Controlador principal para operaciones de ventas
+
+MÉTODOS:
+
+1. createSale(req, res)
+   🎯 CREAR VENTA INDIVIDUAL
+   📋 Flujo:
+   a) Validar datos de entrada
+   b) Iniciar transacción PostgreSQL
+   c) Buscar cliente por documento
+      - Si no existe: crear nuevo cliente
+      - Si existe: usar cliente existente
+   d) Crear vehículo con datos proporcionados
+   e) Crear venta relacionando cliente y vehículo
+   f) Hacer COMMIT de transacción
+   g) Retornar respuesta con IDs generados
+
+2. processSalesFile(req, res)  
+   🎯 PROCESAMIENTO MASIVO DESDE ARCHIVO
+   📋 Flujo:
+   a) Validar archivo subido (Multer)
+   b) Procesar CSV línea por línea con csv-parser
+   c) Para cada línea:
+      - Validar campos requeridos
+      - Buscar/crear cliente (como en createSale)
+      - Crear vehículo
+      - Crear venta
+      - Contabilizar éxito/error
+   d) Limpiar archivo temporal
+   e) Retornar estadísticas completas
+
+CARACTERÍSTICAS TÉCNICAS:
+🔸 Transacciones atómicas (consistencia garantizada)
+🔸 Manejo robusto de errores por registro
+🔸 Procesamiento asíncrono no bloqueante
+🔸 Validación completa de datos
+
+===============================================================================
+                           MIDDLEWARE BACKEND
+===============================================================================
+
+📄 ERRORHANDLER.JS
+------------------
+PROPÓSITO: Manejo centralizado de errores del servidor
+
+TIPOS DE ERRORES MANEJADOS:
+⚠️ Errores de validación (Joi)
+⚠️ Errores de Multer (upload de archivos)
+⚠️ Errores de PostgreSQL (23505=duplicado, 23503=FK)
+⚠️ Errores genéricos del servidor
+
+RESPUESTA ESTÁNDAR:
+```javascript
+{
+  success: false,
+  message: "Mensaje de error descriptivo",
+  errors: ["array de errores si aplica"] // solo en desarrollo
+}
+```
+
+---
+
+📄 UPLOAD.JS  
+-----------
+PROPÓSITO: Configuración de Multer para subida de archivos
+
+CARACTERÍSTICAS:
+🔸 Almacenamiento en disco con nombres únicos (timestamp_nombre)
+🔸 Validación de tipo: solo CSV/TXT
+🔸 Límite de tamaño: 10MB (configurable via MAX_FILE_SIZE)
+🔸 Creación automática de directorio uploads/
+🔸 Sanitización de nombres de archivo
+
+CONFIGURACIÓN:
+```javascript
+const storage = multer.diskStorage({
+  destination: './uploads',
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const cleanName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${timestamp}_${cleanName}`);
+  }
+});
+```
+
+---
+
+📄 VALIDATION.JS
+---------------
+PROPÓSITO: Validación de datos de entrada con Joi
+
+SCHEMA COMPLETO:
+- Todos los campos del formulario de ventas
+- Validaciones de tipo, formato, longitud
+- Mensajes de error personalizados en español
+
+EJEMPLO DE VALIDACIÓN:
+```javascript
+documento: Joi.string().min(7).max(20)
+  .required().messages({
+    'string.min': 'Cédula debe tener al menos 7 caracteres',
+    'any.required': 'Cédula es requerida'
+  })
+```
+
+===============================================================================
+                           RUTAS API REST
+===============================================================================
+
+📄 VENTAS.JS
+-----------
+PROPÓSITO: Definición de endpoints REST para ventas
+
+ENDPOINTS DISPONIBLES:
+
+🔹 POST /api/v1/ventas
+   📯 Propósito: Crear venta individual
+   🔧 Middleware: validateSale (Joi)
+   🎮 Controller: createSale
+   📦 Body: JSON con datos completos de venta
+   ✅ Response: {success: true, data: {venta_id, cliente_id, vehiculo_id}}
+
+🔹 POST /api/v1/ventas/batch  
+   📯 Propósito: Procesamiento masivo desde archivo
+   🔧 Middleware: upload.single('file') (Multer)
+   🎮 Controller: processSalesFile
+   📦 Content-Type: multipart/form-data
+   ✅ Response: {success: true, data: {processed, errors, total, details}}
+
+🔹 GET /health
+   📯 Propósito: Health check del servidor
+   ✅ Response: {status: 'OK', timestamp, uptime}
+
+===============================================================================
+                           FLUJOS DE DATOS COMPLETOS
+===============================================================================
+
+🔄 ESCENARIO 1: VENTA INDIVIDUAL
+--------------------------------
+1. 🖱️ Usuario completa SalesForm.tsx
+2. ✅ React Hook Form valida con Zod schema (tiempo real)
+3. 📤 Usuario hace submit → onSubmit()
+4. 🌐 saveSale() hace POST a /api/v1/ventas
+5. 🔍 Backend: validateSale middleware (Joi)
+6. 💾 Backend: createSale controller
+7. 🗄️ Transacción PostgreSQL:
+   - 🔎 Busca cliente por documento
+   - 👤 Si no existe → crea cliente
+   - 🏍️ Crea vehículo
+   - 💰 Crea venta
+8. ✅ COMMIT transacción
+9. 📬 Respuesta JSON con éxito/error
+10. 🎉 Frontend muestra notificación verde/roja
+
+🔄 ESCENARIO 2: CARGA MASIVA  
+-----------------------------
+1. 📁 Usuario selecciona archivo CSV/TXT en FileUpload.tsx
+2. 🔍 Validación cliente (tipo, tamaño, extensión)
+3. 📤 uploadSalesFile() con callback de progreso
+4. 🌐 XMLHttpRequest POST a /api/v1/ventas/batch
+5. 📂 Multer guarda archivo temporalmente en ./uploads/
+6. 📄 processSalesFile controller:
+   - 📖 csv-parser procesa línea por línea
+   - 🔍 Por cada línea: valida campos requeridos
+   - 👤 Busca/crea cliente (como en venta individual)
+   - 🏍️ Crea vehículo
+   - 💰 Crea venta  
+   - 📊 Contabiliza éxitos y errores
+7. 🗑️ Limpia archivo temporal
+8. 📬 Respuesta con estadísticas completas
+9. 🎉 Frontend muestra resumen de procesamiento
+
+===============================================================================
+                           CONFIGURACIÓN Y DESPLIEGUE
+===============================================================================
+
+📄 PACKAGE.JSON (BACKEND)
+-------------------------
+DEPENDENCIAS PRINCIPALES:
+🔹 express: Framework web
+🔹 pg: Driver PostgreSQL  
+🔹 multer: Subida de archivos
+🔹 joi: Validación de datos
+🔹 csv-parser: Procesamiento CSV
+🔹 cors: Compartir recursos entre orígenes
+🔹 helmet: Seguridad HTTP
+🔹 morgan: Logging de peticiones
+
+SCRIPTS:
+🏃‍♂️ npm start → Producción
+🔧 npm run dev → Desarrollo con nodemon
+🧪 npm test → Pruebas
+
+📄 .ENV.EXAMPLE
+--------------
+VARIABLES DE ENTORNO:
+```env
+# Servidor
+PORT=3000
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# Base de datos  
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=yamaha_test
+DB_USER=postgres
+DB_PASSWORD=password
+
+# Archivos
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=./uploads
+```
+
+===============================================================================
+                           RELACIÓN ENTRE ARCHIVOS
+===============================================================================
+
+🔗 FRONTEND INTERNO:
+SalesForm.tsx ↔ apiService.ts ↔ salesSchema.ts ↔ types/index.ts
+     ↓              ↓              ↓              ↓
+   Formulario → API Calls → Validación → Tipos de datos
+
+🔗 BACKEND INTERNO:  
+index.js → routes/ventas.js → middleware/ → controllers/ventasController.js → config/database.js
+    ↓           ↓              ↓              ↓                    ↓
+  Servidor → Rutas → Validación/Upload → Lógica negocio → Base datos
+
+🔗 COMUNICACIÓN FRONTEND-BACKEND:
+Frontend (apiService.ts) ↔ HTTP Request ↔ Backend (Express)
+    ↓                           ↓
+  http://localhost:3000/api/v1/ventas  →  ventasController.js
+  http://localhost:3000/api/v1/ventas/batch → processSalesFile()
+
+===============================================================================
+                           RESUMEN FUNCIONAL
+===============================================================================
+
+🎯 OBJETIVO PRINCIPAL: Sistema completo para gestión de ventas Yamaha
+
+✅ CARACTERÍSTICAS IMPLEMENTADAS:
+- Formulario de venta individual con validación completa
+- Carga masiva desde archivos CSV/TXT  
+- Base de datos PostgreSQL con relaciones completas
+- API REST robusta con manejo de errores
+- Interfaz moderna con feedback visual
+- Procesamiento asíncrono y escalable
+- Validación cliente-servidor
+- Manejo de transacciones ACID
+
+🔧 TECNOLOGÍAS UTILIZADAS:
+- Frontend: React, TypeScript, TailwindCSS, React Hook Form, Zod
+- Backend: Node.js, Express, PostgreSQL, Multer, Joi
+- Comunicación: REST APIs, XMLHttpRequest, JSON
+
+📊 FLUJO DE INFORMACIÓN:
+Usuario → Frontend → API REST → Backend → PostgreSQL → Respuesta → Frontend → Usuario
+
+===============================================================================
+                           FIN DE DOCUMENTACIÓN
+===============================================================================
+
+Este documento cubre completamente la arquitectura, funcionamiento y relación
+entre todos los archivos del 2do punto del proyecto Yamaha Technical Test.
+
+Para más información técnica detallada, consultar:
+- README.md del backend (instrucciones de instalación)
+- logicaProcesamientoBackPunto2.txt (flujo original)
+- Código fuente comentado en cada archivo
